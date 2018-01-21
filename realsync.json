@@ -1,16 +1,10 @@
 {
   "syncDirs": [
     {
-      "srcDir": "D:\\project\\cloudtopo-website\\src\\main\\resources",
-      "tgtDir": "D:\\project\\cloudtopo-website\\target\\classes",
+      "srcDir": "d:\\temp\\aa",
+      "tgtDir": "d:\\temp\\bb",
       "enable": true,
       "syncDelete": false,
-      "syncCreate": true,
-      "syncModify": true
-    },
-    {
-      "enable": false,
-      "syncDelete": true,
       "syncCreate": true,
       "syncModify": true
     }

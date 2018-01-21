@@ -1,12 +1,22 @@
 package com.cloudtopo.tools;
 
-import java.nio.file.*;
-import static java.nio.file.StandardWatchEventKinds.*;
-import static java.nio.file.LinkOption.*;
-import java.nio.file.attribute.*;
-import java.io.*;
-import java.util.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.swing.JTextArea;
 
 import org.apache.commons.io.FileUtils;
  
@@ -18,7 +28,7 @@ public class Watcher {
  
     private final WatchService watcherService;
     private final Map<WatchKey,SyncDir> key2Sync;
-    
+    private final JTextArea textArea;
  
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -61,9 +71,10 @@ public class Watcher {
     /**
      * Creates a WatchService and registers the given directory
      */
-    Watcher() throws IOException {
+    Watcher(JTextArea textArea) throws IOException {
         this.watcherService = FileSystems.getDefault().newWatchService();
         this.key2Sync = new ConcurrentHashMap<WatchKey, SyncDir>();
+        this.textArea = textArea;
         new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -104,9 +115,10 @@ public class Watcher {
                 Path tgtDir = Paths.get(sync.tgtDir);
                 File srcFile = new File(srcDir.resolve(name).toUri());
                 File tgtFile = new File(tgtDir.resolve(name).toUri());
-                System.out.println(kind.toString() + ":" + srcFile.getAbsolutePath());
+                //System.out.println(kind.toString() + ":" + srcFile.getAbsolutePath());
                 
                 if (kind == ENTRY_CREATE && sync.syncCreate) {
+                	textArea.append("create " + tgtFile.getAbsolutePath() + "\r\n"); 
                     if (srcFile.isDirectory()) {
                     	tgtFile.mkdirs();
                         registerSingle(srcFile.toPath(), new SyncDir(sync, name.toString()));
@@ -116,10 +128,13 @@ public class Watcher {
                     }                    
                 }
                 else if (kind == ENTRY_MODIFY && sync.syncModify) {
-                	if (srcFile.isFile())
+                	if (srcFile.isFile()) {
+                		textArea.append("modify " + tgtFile.getAbsolutePath() + "\r\n"); 
                 		FileUtils.copyFile(srcFile,tgtFile);
+                	}
                 }
                 else if (kind == ENTRY_DELETE && sync.syncDelete) {
+                	textArea.append("delete " + tgtFile.getAbsolutePath() + "\r\n"); 
                 	if (tgtFile.isFile())
                 		tgtFile.delete();
                 	else

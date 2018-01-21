@@ -1,38 +1,34 @@
 package com.cloudtopo.tools;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.UIManager;
-import javax.swing.JScrollPane;
-import javax.swing.table.TableModel;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import java.awt.event.ActionListener;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.UIManager;
+
+import org.apache.commons.io.FileUtils;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 
 public class RealSyncApp extends JFrame {
@@ -48,30 +44,41 @@ public class RealSyncApp extends JFrame {
 	private boolean syncStarted;
 	
 	public RealSyncApp() throws IOException {
-		
-		watcher = new Watcher();
-		syncStarted = false;
+
 		
 		setTitle("RealSync 1.0");
 		
 		loadSyncDir();
 		syncModel = new SyncDirModel(syncDirs);
+		getContentPane().setLayout(new BorderLayout(0, 0));
+		
 		JScrollPane scrollPane = new JScrollPane();
-		getContentPane().add(scrollPane, BorderLayout.CENTER);
+		getContentPane().add(scrollPane, BorderLayout.NORTH);
 		
 		tblSyncDir = new JTable(syncModel);
+		tblSyncDir.setBackground(Color.WHITE);
+		tblSyncDir.setPreferredScrollableViewportSize(tblSyncDir.getPreferredSize());
 		scrollPane.setViewportView(tblSyncDir);
+		
+		JTextArea txtrSyncLog = new JTextArea();
+		txtrSyncLog.setFont(new Font("Monospaced", Font.PLAIN, 11));
+		txtrSyncLog.setText("Sync log:");
+		txtrSyncLog.setBackground(new Color(245, 245, 245));
+		getContentPane().add(txtrSyncLog, BorderLayout.CENTER);
 		
 		JPanel panel = new JPanel();
 		FlowLayout flowLayout = (FlowLayout) panel.getLayout();
 		flowLayout.setAlignment(FlowLayout.RIGHT);
 		getContentPane().add(panel, BorderLayout.SOUTH);
 		
-		JButton btnNew = new JButton("New");
+		JButton btnNew = new JButton("Add");
 		btnNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				syncDirs.add(new SyncDir());
 				syncModel.fireTableDataChanged();
+				tblSyncDir.setPreferredScrollableViewportSize(tblSyncDir.getPreferredSize());
+				revalidate();
+				repaint();
 			}
 		});
 		panel.add(btnNew);
@@ -83,6 +90,9 @@ public class RealSyncApp extends JFrame {
 				if (selectedRow >= 0 && selectedRow < syncDirs.size()) {
 					syncDirs.remove(selectedRow);
 					syncModel.fireTableDataChanged();
+					tblSyncDir.setPreferredScrollableViewportSize(tblSyncDir.getPreferredSize());
+					revalidate();
+					repaint();
 				}
 			}
 		});
@@ -117,6 +127,9 @@ public class RealSyncApp extends JFrame {
 		    }
 		});
 		
+		
+		watcher = new Watcher(txtrSyncLog);
+		syncStarted = false;
 	}
 
 	private void loadSyncDir() {
